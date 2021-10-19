@@ -5,64 +5,59 @@ import Button from '../Button/Button';
 import Rejected from '../Rejected/Rejected';
 import Loader from '../Loader/Loader';
 import IdleMessage from '../IdleMessage/IdleMessage';
-import ApiService from '../../API';
+import ApiService from '../../services/API';
 import PropTypes from 'prop-types';
-
 const galleryApi = new ApiService();
 
-const ImageGallery = ({query})=>{
+const ImageGallery = ({ query }) => {
 
-// class ImageGallery extends Component {
-//   state = {
-//     images: [],
-//     error: null,
-//     status: 'idle',
-//   };
 
   const [images, setImages] = useState([]);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState('idle');
 
- function handleQuery() {
-   galleryApi
-     .fetchCards()
-     .then(result => {
-       if (result.hits.length > 0) {
-         updateImagesArray(result.hits);
-         galleryApi.page += 1;
-         scrollView();
-         return;
-       }
-       throw new Error(`Sorry, but no result for ${galleryApi.query}`);
-     })
-     .catch(error => { setError(error); setStatus('rejected') });
+  function handleQuery() {
+    galleryApi
+      .fetchCards()
+      .then(result => {
+        if (result.hits.length > 0) {
+          updateImagesArray(result.hits);
+          galleryApi.page += 1;
+          return result;
+        }
+        throw new Error(`Sorry, but no result for ${galleryApi.query}`);
+      })
+      .catch(error => { setError(error); setStatus('rejected') });
   }
+
   const updateImagesArray = update => {
-   setStatus('resolved');
+    setStatus('resolved');
     if (galleryApi.page === 1) {
-     return setImages(update); 
+      return setImages(update);
     }
-    return setImages ([...images, ...update]);
+    return setImages(images=>[...images, ...update]);
   };
 
-  const scrollView = () => {
-    console.log(images, images.length);
-    if (images.length > 12) {
-      window.scrollTo({
-        top: document.documentElement.scrollHeight,
-        behavior: 'smooth',
-      });
-    }
-    return;
-  };
   useEffect(() => {
     if (!query) return;
     setStatus('pending');
     galleryApi.reset();
     galleryApi.request = query;
     handleQuery();
-    return query;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
+
+  useEffect(() => {
+    if (images.length === 0) { return; }
+    // console.log('from scroll', images, images.length);
+    if (images.length > 12) {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+}, [images]
+  )
 
  const  loadMore=()=> {
     setStatus('pending');
